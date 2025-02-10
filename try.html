@@ -96,17 +96,10 @@
     <h2 id="result"></h2>
     <div class="heart"></div>
 
-    <!-- Include the Appwrite SDK -->
     <script type="module">
-        import { Client, Databases } from "https://cdn.jsdelivr.net/npm/appwrite@0.12.0/dist/appwrite.min.js";
-
-        // Initialize Appwrite client
-        const client = new Client();
-        client
-            .setEndpoint("https://cloud.appwrite.io/v1") // Replace with your Appwrite endpoint
-            .setProject("workspace"); // Replace with your project ID
-
-        const databases = new Databases(client);
+        // Initialize Supabase client
+        import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
+        const supabase = createClient('https://tkymsnplawtmunyukily.supabase.co', 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRreW1zbnBsYXd0bXVueXVraWx5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzkyMDg4NzcsImV4cCI6MjA1NDc4NDg3N30.BKE4GFvmsZkoXeL4q8ahy4tRB7cJB0qguPQN5n6H5Yc'); // Replace with your Supabase URL and API Key
 
         // Function to remove common letters
         function removeCommonLetters(name1, name2) {
@@ -122,7 +115,7 @@
             return arr1.length + arr2.length;
         }
 
-        // Function to calculate flames result
+        // Function to determine FLAMES result
         function flamesResult(count) {
             let flames = ["Friends", "Lovers", "Affection", "Marriage", "Enemies", "Siblings"];
             let index = 0;
@@ -133,31 +126,24 @@
             return flames[0];
         }
 
-        // Function to store names and calculate flames result
+        // Main function to play FLAMES game and store data
         async function playFlames() {
             let name1 = document.getElementById("name1").value.trim();
             let name2 = document.getElementById("name2").value.trim();
-
             if (name1 && name2) {
+                let count = removeCommonLetters(name1, name2);
+                let result = flamesResult(count);
+                document.getElementById("result").innerText = `Relationship: ${result}`;
+
+                // Store names in Supabase
                 try {
-                    // Store names in Appwrite Database (replace 'flames' with your collection ID)
-                    const response = await databases.createDocument(
-                        "67aa414d002b236d0ff9", // Replace with your database ID
-                        "67aa4181002d875b17c1", // Replace with your collection ID
-                        {
-                            name1: name1,
-                            name2: name2,
-                        }
-                    );
-
-                    console.log("Names stored:", response);
-
-                    // Calculate flames result
-                    let count = removeCommonLetters(name1, name2);
-                    let result = flamesResult(count);
-                    document.getElementById("result").innerText = `Relationship: ${result}`;
+                    const { data, error } = await supabase
+                        .from('flames_game') // Replace with your table name
+                        .insert([{ name1: name1, name2: name2 }]);
+                    if (error) throw error;
+                    console.log('Names stored:', data);
                 } catch (error) {
-                    console.error("Error storing names in Appwrite:", error);
+                    console.error('Error storing names in Supabase:', error);
                 }
             } else {
                 document.getElementById("result").innerText = "Please enter both names!";
