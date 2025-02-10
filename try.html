@@ -4,13 +4,90 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>FLAMES Game</title>
-    <!-- Firebase SDK -->
-    <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/9.5.0/firebase-app.js";
-        import { getFirestore, collection, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/9.5.0/firebase-firestore.js";
-    </script>
+    <script src="https://www.gstatic.com/firebasejs/9.5.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.5.0/firebase-firestore.js"></script>
     <style>
-        /* Add your styles here */
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            margin: 50px;
+            background-color: #ffe6e6;
+            background-image: url('https://www.wallpapersafari.com/valentines-background-free/');
+            background-size: cover;
+            background-repeat: no-repeat;
+            background-attachment: fixed;
+        }
+        input {
+            margin: 10px;
+            padding: 10px;
+            border: 2px solid #ff4d4d;
+            border-radius: 5px;
+        }
+        button {
+            padding: 10px 20px;
+            cursor: pointer;
+            background-color: #ff4d4d;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            font-size: 16px;
+        }
+        button:hover {
+            background-color: #e60000;
+        }
+        #result {
+            margin-top: 20px;
+            font-size: 24px;
+            color: #ff1a1a;
+        }
+        .heart {
+            background-color: red;
+            display: inline-block;
+            height: 50px;
+            position: relative;
+            top: 0;
+            transform: rotate(-45deg);
+            width: 50px;
+            animation: heartbeat 1s infinite;
+            margin-top: 20px;
+        }
+        .heart:before,
+        .heart:after {
+            content: "";
+            background-color: red;
+            border-radius: 50%;
+            height: 50px;
+            position: absolute;
+            width: 50px;
+        }
+        .heart:before {
+            top: -25px;
+            left: 0;
+        }
+        .heart:after {
+            left: 25px;
+            top: 0;
+        }
+        @keyframes heartbeat {
+            0% {
+                transform: scale(1) rotate(-45deg);
+            }
+            20% {
+                transform: scale(1.25) rotate(-45deg);
+            }
+            40% {
+                transform: scale(1.5) rotate(-45deg);
+            }
+            60% {
+                transform: scale(1.25) rotate(-45deg);
+            }
+            80% {
+                transform: scale(1) rotate(-45deg);
+            }
+            100% {
+                transform: scale(1) rotate(-45deg);
+            }
+        }
     </style>
 </head>
 <body>
@@ -20,8 +97,7 @@
     <button onclick="playFlames()">Find Relationship</button>
     <h2 id="result"></h2>
     <div class="heart"></div>
-
-    <script type="module">
+    <script>
         // Firebase Configuration (replace with your own config)
         const firebaseConfig = {
             apiKey: "AIzaSyAe0xx_UfIyUMN-18edJm2F7xQn3VZq34o",
@@ -34,8 +110,8 @@
         };
 
         // Initialize Firebase
-        const app = initializeApp(firebaseConfig);
-        const db = getFirestore(app);
+        const app = firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
 
         function removeCommonLetters(name1, name2) {
             let arr1 = name1.toLowerCase().replace(/\s/g, '').split('');
@@ -60,27 +136,29 @@
             return flames[0];
         }
 
-        async function playFlames() {
+        function playFlames() {
             let name1 = document.getElementById("name1").value.trim();
             let name2 = document.getElementById("name2").value.trim();
-
+            
             if (name1 && name2) {
                 let count = removeCommonLetters(name1, name2);
                 let result = flamesResult(count);
                 document.getElementById("result").innerText = `Relationship: ${result}`;
 
                 // Save names to Firestore
-                try {
-                    await addDoc(collection(db, "flames_game"), {
-                        name1: name1,
-                        name2: name2,
-                        result: result,
-                        created_at: serverTimestamp()
-                    });
+                db.collection("flames_game").add({
+                    name1: name1,
+                    name2: name2,
+                    result: result,
+                    created_at: firebase.firestore.FieldValue.serverTimestamp()
+                })
+                .then(() => {
                     console.log("Names saved to Firestore");
-                } catch (error) {
+                })
+                .catch((error) => {
                     console.error("Error adding document: ", error);
-                }
+                });
+
             } else {
                 document.getElementById("result").innerText = "Please enter both names!";
             }
