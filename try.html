@@ -4,6 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>FLAMES Game</title>
+    <script src="https://www.gstatic.com/firebasejs/9.5.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.5.0/firebase-firestore.js"></script>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -95,13 +97,22 @@
     <button onclick="playFlames()">Find Relationship</button>
     <h2 id="result"></h2>
     <div class="heart"></div>
+    <script>
+        // Firebase Configuration (replace with your own config)
+        const firebaseConfig = {
+            apiKey: "AIzaSyAe0xx_UfIyUMN-18edJm2F7xQn3VZq34o",
+            authDomain: "flames-workspace.firebaseapp.com",
+            projectId: "flames-workspace",
+            storageBucket: "flames-workspace.firebasestorage.app",
+            messagingSenderId: "297627138932",
+            appId: "1:297627138932:web:733059045ab5458f06ca21",
+            measurementId: "G-52PWK6YZSV"
+          };
 
-    <script type="module">
-        // Initialize Supabase client
-        import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
-        const supabase = createClient('https://tkymsnplawtmunyukily.supabase.co', 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRreW1zbnBsYXd0bXVueXVraWx5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzkyMDg4NzcsImV4cCI6MjA1NDc4NDg3N30.BKE4GFvmsZkoXeL4q8ahy4tRB7cJB0qguPQN5n6H5Yc'); // Replace with your Supabase URL and API Key
+        // Initialize Firebase
+        const app = firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
 
-        // Function to remove common letters
         function removeCommonLetters(name1, name2) {
             let arr1 = name1.toLowerCase().replace(/\s/g, '').split('');
             let arr2 = name2.toLowerCase().replace(/\s/g, '').split('');
@@ -115,7 +126,6 @@
             return arr1.length + arr2.length;
         }
 
-        // Function to determine FLAMES result
         function flamesResult(count) {
             let flames = ["Friends", "Lovers", "Affection", "Marriage", "Enemies", "Siblings"];
             let index = 0;
@@ -126,25 +136,29 @@
             return flames[0];
         }
 
-        // Main function to play FLAMES game and store data
-        async function playFlames() {
+        function playFlames() {
             let name1 = document.getElementById("name1").value.trim();
             let name2 = document.getElementById("name2").value.trim();
+            
             if (name1 && name2) {
                 let count = removeCommonLetters(name1, name2);
                 let result = flamesResult(count);
                 document.getElementById("result").innerText = `Relationship: ${result}`;
 
-                // Store names in Supabase
-                try {
-                    const { data, error } = await supabase
-                        .from('flames_game') // Replace with your table name
-                        .insert([{ name1: name1, name2: name2 }]);
-                    if (error) throw error;
-                    console.log('Names stored:', data);
-                } catch (error) {
-                    console.error('Error storing names in Supabase:', error);
-                }
+                // Save names to Firestore
+                db.collection("flames_game").add({
+                    name1: name1,
+                    name2: name2,
+                    result: result,
+                    created_at: firebase.firestore.FieldValue.serverTimestamp()
+                })
+                .then(() => {
+                    console.log("Names saved to Firestore");
+                })
+                .catch((error) => {
+                    console.error("Error adding document: ", error);
+                });
+
             } else {
                 document.getElementById("result").innerText = "Please enter both names!";
             }
