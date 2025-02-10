@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FLAMES Game</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@1.35.5/dist/umd/supabase.min.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            margin: 50px;
+            background-color: #ffe6e6;
+            background-image: url('https://www.wallpapersafari.com/valentines-background-free/');
+            background-size: cover;
+            background-repeat: no-repeat;
+            background-attachment: fixed;
+        }
+        input {
+            margin: 10px;
+            padding: 10px;
+            border: 2px solid #ff4d4d;
+            border-radius: 5px;
+        }
+        button {
+            padding: 10px 20px;
+            cursor: pointer;
+            background-color: #ff4d4d;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            font-size: 16px;
+        }
+        button:hover {
+            background-color: #e60000;
+        }
+        #result {
+            margin-top: 20px;
+            font-size: 24px;
+            color: #ff1a1a;
+        }
+        .heart {
+            background-color: red;
+            display: inline-block;
+            height: 50px;
+            position: relative;
+            top: 0;
+            transform: rotate(-45deg);
+            width: 50px;
+            animation: heartbeat 1s infinite;
+            margin-top: 20px;
+        }
+        .heart:before,
+        .heart:after {
+            content: "";
+            background-color: red;
+            border-radius: 50%;
+            height: 50px;
+            position: absolute;
+            width: 50px;
+        }
+        .heart:before {
+            top: -25px;
+            left: 0;
+        }
+        .heart:after {
+            left: 25px;
+            top: 0;
+        }
+        @keyframes heartbeat {
+            0% {
+                transform: scale(1) rotate(-45deg);
+            }
+            20% {
+                transform: scale(1.25) rotate(-45deg);
+            }
+            40% {
+                transform: scale(1.5) rotate(-45deg);
+            }
+            60% {
+                transform: scale(1.25) rotate(-45deg);
+            }
+            80% {
+                transform: scale(1) rotate(-45deg);
+            }
+            100% {
+                transform: scale(1) rotate(-45deg);
+            }
+        }
+    </style>
+</head>
+<body>
+    <h1>FLAMES Game</h1>
+    <input type="text" id="name1" placeholder="Enter first name">
+    <input type="text" id="name2" placeholder="Enter second name">
+    <button onclick="playFlames()">Find Relationship</button>
+    <h2 id="result"></h2>
+    <div class="heart"></div>
+
+    <script>
+        // Initialize Supabase
+        const supabaseUrl = 'https://tkymsnplawtmunyukily.supabase.co'; // Replace with your Supabase URL
+        const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRreW1zbnBsYXd0bXVueXVraWx5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzkyMDg4NzcsImV4cCI6MjA1NDc4NDg3N30.BKE4GFvmsZkoXeL4q8ahy4tRB7cJB0qguPQN5n6H5Yc'; // Replace with your Supabase anon key
+        const supabase = supabase.createClient(supabaseUrl, supabaseKey);
+
+        function removeCommonLetters(name1, name2) {
+            let arr1 = name1.toLowerCase().replace(/\s/g, '').split('');
+            let arr2 = name2.toLowerCase().replace(/\s/g, '').split('');
+            arr1.forEach(char => {
+                let index = arr2.indexOf(char);
+                if (index !== -1) {
+                    arr2.splice(index, 1);
+                    arr1.splice(arr1.indexOf(char), 1);
+                }
+            });
+            return arr1.length + arr2.length;
+        }
+
+        function flamesResult(count) {
+            let flames = ["Friends", "Lovers", "Affection", "Marriage", "Enemies", "Siblings"];
+            let index = 0;
+            while (flames.length > 1) {
+                index = (index + count - 1) % flames.length;
+                flames.splice(index, 1);
+            }
+            return flames[0];
+        }
+
+        async function saveToSupabase(name1, name2, relationship) {
+            const { data, error } = await supabase
+                .from('game_data')
+                .insert([
+                    { name1: name1, name2: name2, relationship: relationship }
+                ]);
+
+            if (error) {
+                console.error('Error inserting data into Supabase:', error);
+            } else {
+                console.log('Data inserted successfully:', data);
+            }
+        }
+        
+
+        async function playFlames() {
+            let name1 = document.getElementById("name1").value.trim();
+            let name2 = document.getElementById("name2").value.trim();
+            if (name1 && name2) {
+                let count = removeCommonLetters(name1, name2);
+                let result = flamesResult(count);
+                document.getElementById("result").innerText = `Relationship: ${result}`;
+
+                // Save to Supabase
+                await saveToSupabase(name1, name2, result);
+            } else {
+                document.getElementById("result").innerText = "Please enter both names!";
+            }
+        }
+    </script>
+</body>
+</html>
