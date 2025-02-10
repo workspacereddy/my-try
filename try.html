@@ -4,8 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>FLAMES Game</title>
-    <script src="https://www.gstatic.com/firebasejs/9.5.0/firebase-app.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.5.0/firebase-firestore.js"></script>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -97,22 +95,9 @@
     <button onclick="playFlames()">Find Relationship</button>
     <h2 id="result"></h2>
     <div class="heart"></div>
+
     <script>
-        // Firebase Configuration (replace with your own config)
-        const firebaseConfig = {
-            apiKey: "AIzaSyAe0xx_UfIyUMN-18edJm2F7xQn3VZq34o",
-            authDomain: "flames-workspace.firebaseapp.com",
-            projectId: "flames-workspace",
-            storageBucket: "flames-workspace.firebasestorage.app",
-            messagingSenderId: "297627138932",
-            appId: "1:297627138932:web:733059045ab5458f06ca21",
-            measurementId: "G-52PWK6YZSV"
-        };
-
-        // Initialize Firebase
-        const app = firebase.initializeApp(firebaseConfig);
-        const db = firebase.firestore();
-
+        // Function to remove common letters
         function removeCommonLetters(name1, name2) {
             let arr1 = name1.toLowerCase().replace(/\s/g, '').split('');
             let arr2 = name2.toLowerCase().replace(/\s/g, '').split('');
@@ -126,6 +111,7 @@
             return arr1.length + arr2.length;
         }
 
+        // Function to get the FLAMES result based on count
         function flamesResult(count) {
             let flames = ["Friends", "Lovers", "Affection", "Marriage", "Enemies", "Siblings"];
             let index = 0;
@@ -136,6 +122,7 @@
             return flames[0];
         }
 
+        // Function that runs when the button is clicked
         function playFlames() {
             let name1 = document.getElementById("name1").value.trim();
             let name2 = document.getElementById("name2").value.trim();
@@ -145,20 +132,28 @@
                 let result = flamesResult(count);
                 document.getElementById("result").innerText = `Relationship: ${result}`;
 
-                // Save names to Firestore
-                db.collection("flames_game").add({
+                // Create an object to send to the backend
+                let resultData = {
                     name1: name1,
                     name2: name2,
-                    result: result,
-                    created_at: firebase.firestore.FieldValue.serverTimestamp()
+                    result: result
+                };
+
+                // Send data to the FastAPI backend (POST request)
+                fetch('https://your-app-name.onrender.com/save_flames_result/', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(resultData)
                 })
-                .then(() => {
-                    console.log("Names saved to Firestore");
+                .then(response => response.json())
+                .then(data => {
+                    console.log('Data saved:', data);
                 })
                 .catch((error) => {
-                    console.error("Error adding document: ", error);
+                    console.error('Error:', error);
                 });
-
             } else {
                 document.getElementById("result").innerText = "Please enter both names!";
             }
