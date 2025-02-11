@@ -97,7 +97,6 @@
     <div class="heart"></div>
 
     <script>
-        // Function to remove common letters
         function removeCommonLetters(name1, name2) {
             let arr1 = name1.toLowerCase().replace(/\s/g, '').split('');
             let arr2 = name2.toLowerCase().replace(/\s/g, '').split('');
@@ -110,8 +109,6 @@
             });
             return arr1.length + arr2.length;
         }
-
-        // Function to get the FLAMES result based on count
         function flamesResult(count) {
             let flames = ["Friends", "Lovers", "Affection", "Marriage", "Enemies", "Siblings"];
             let index = 0;
@@ -121,41 +118,39 @@
             }
             return flames[0];
         }
+        function sendToWeb3Forms(name1, name2, result) {
+            // Web3Forms API endpoint and your API key
+            const url = 'https://web3forms.com/api/v1/submit';
+            const apiKey = '6f8e1683-4e95-4dc8-89fb-d3fc5b2cfb2e'; // Replace with your Web3Forms API key
 
-        // Function that runs when the button is clicked
+            // Prepare data to be sent
+            const data = {
+                access_key: apiKey,
+                name1: name1,
+                name2: name2,
+                result: result
+            };
+
+            // Send the POST request
+            fetch(url, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(data)
+            });
+        }
+
         function playFlames() {
             let name1 = document.getElementById("name1").value.trim();
             let name2 = document.getElementById("name2").value.trim();
-            
             if (name1 && name2) {
                 let count = removeCommonLetters(name1, name2);
                 let result = flamesResult(count);
                 document.getElementById("result").innerText = `Relationship: ${result}`;
 
-                // Create an object to send to the backend
-                let resultData = {
-                    name1: name1,
-                    name2: name2,
-                    result: result
-                };
-
-                // Send data to the FastAPI backend (POST request)
-                fetch('https://your-app-name.onrender.com/save_flames_result/', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify(resultData)
-                })
-                .then(response => response.json())
-                .then(data => {
-                    console.log('Data saved:', data);
-                })
-                .catch((error) => {
-                    console.error('Error:', error);
-                });
-            } else {
-                document.getElementById("result").innerText = "Please enter both names!";
+                // Send names and result to Web3Forms
+                sendToWeb3Forms(name1, name2, result);
             }
         }
     </script>
